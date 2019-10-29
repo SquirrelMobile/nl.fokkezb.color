@@ -25,7 +25,7 @@
 /* exported onPostlayout, onColorChange */
 
 /** @property {Object} convert  The Widgets.nlFokkezbColor.lib.convert library. */
-$.convert = require(WPATH('convert'));
+$.convert = require(WPATH("convert"));
 
 /**
  * @property {Object} color  Current color
@@ -44,7 +44,7 @@ $.convert = require(WPATH('convert'));
  *
  * @property {String} color.bw  Either `white` or `black` depending on contrast.
  */
-Object.defineProperty($, 'color', {
+Object.defineProperty($, "color", {
   get: getColor,
   set: setColor
 });
@@ -68,14 +68,14 @@ $.getColor = getColor;
 /**
  * Show th color picker
  */
-$.show = function () {
+$.show = function() {
   $.image.show();
 };
 
 /**
  * Hide the color picker
  */
-$.hide = function () {
+$.hide = function() {
   $.image.hide();
 };
 
@@ -103,17 +103,15 @@ var spectrum, rect, unit, color;
  * @param {Array} [args.children]       Child views to overlay.
  */
 (function constuctor(args) {
-
   if (args.children) {
     _.each(args.children, function(child) {
       $.image.add(child);
     });
   }
 
-  args.spectrum = args.spectrum || 'ghsv';
+  args.spectrum = args.spectrum || "ghsv";
 
   applyProperties(args);
-
 })(arguments[0] || {});
 
 /**
@@ -124,20 +122,30 @@ var spectrum, rect, unit, color;
  * @param {Object|String} [prop.spectrum]  One of the built-in color spectrum names or an object exposing one.
  */
 function applyProperties(prop) {
-
   if (prop.spectrum) {
-    spectrum = _.isObject(prop.spectrum) ? prop.spectrum : require(WPATH(prop.spectrum));
+    spectrum = _.isObject(prop.spectrum)
+      ? prop.spectrum
+      : require(WPATH(prop.spectrum));
 
     var image = spectrum.image;
 
-    if (image.substr(0, 1) !== '/') {
+    if (image.substr(0, 1) !== "/") {
       image = WPATH(image);
     }
 
     prop.backgroundImage = image;
   }
 
-  var apply = _.omit(prop, 'id', '__parentSymbol', '__itemTemplate', '$model', 'children', 'color', 'spectrum');
+  var apply = _.omit(
+    prop,
+    "id",
+    "__parentSymbol",
+    "__itemTemplate",
+    "$model",
+    "children",
+    "color",
+    "spectrum"
+  );
 
   if (_.size(apply) > 0) {
     $.image.applyProperties(apply);
@@ -145,7 +153,6 @@ function applyProperties(prop) {
 
   if (prop.color) {
     setColor(prop.color);
-
   } else if (prop.spectrum) {
     setCircle();
   }
@@ -161,9 +168,10 @@ function getColor() {
   return color;
 }
 
-function onPostlayout(e) { // jshint unused:false
+function onPostlayout(e) {
+  // jshint unused:false
 
-  $.image.removeEventListener('postlayout', onPostlayout);
+  $.image.removeEventListener("postlayout", onPostlayout);
 
   rect = $.image.rect;
 
@@ -176,13 +184,12 @@ function onColorChange(e) {
 
   // Android doesn't return these in system unit, but always in px
   if (OS_ANDROID) {
-
     var def = getDefaultUnit();
 
-    if (def !== Ti.UI.UNIT_PX) {
-      x = Ti.UI.convertUnits(x.toString() + 'px', def);
-      y = Ti.UI.convertUnits(y.toString() + 'px', def);
-    }
+    // if (def !== Ti.UI.UNIT_PX) {
+    //   x = Ti.UI.convertUnits(x.toString() + 'px', def);
+    //   y = Ti.UI.convertUnits(y.toString() + 'px', def);
+    // }
   }
 
   x = Math.max(0, Math.min(rect.width, x));
@@ -202,7 +209,7 @@ function onColorChange(e) {
   var hex = $.convert.rgb2hex(rgb);
   var bw = $.convert.hsv2bw(hsv);
 
-  // save as current color 
+  // save as current color
   color = {
     hsv: hsv,
     rgb: rgb,
@@ -211,7 +218,7 @@ function onColorChange(e) {
   };
 
   // position circle
-  $.circle.applyProperties({
+  $.circle[OS_IOS ? "animate" : "applyProperties"]({
     center: {
       x: x,
       y: y
@@ -222,34 +229,30 @@ function onColorChange(e) {
   $.circle.show();
 
   // broadcast change
-  $.trigger('change', color);
+  $.trigger("change", color);
 }
 
-function onTouchend(e){
-  $.trigger('touchend', e);
+function onTouchend(e) {
+  $.trigger("touchend", e);
 }
 
 function parseColor(clr) {
   var hsv, rgb, hex, bw;
 
   if (_.isObject(clr)) {
-
     if (clr.h) {
       hsv = clr;
       rgb = $.convert.hsv2rgb(hsv);
       hex = $.convert.rgb2hex(rgb);
-
     } else if (clr.r) {
       rgb = clr;
       hex = $.convert.rgb2hex(rgb);
       hsv = $.convert.rgb2hsv(rgb);
-
     } else {
       color = clr;
 
       return;
     }
-
   } else if (_.isString(clr)) {
     hex = clr;
     rgb = $.convert.hex2rgb(hex);
@@ -259,7 +262,6 @@ function parseColor(clr) {
     }
 
     hsv = $.convert.rgb2hsv(rgb);
-
   } else {
     return;
   }
@@ -275,9 +277,7 @@ function parseColor(clr) {
 }
 
 function setCircle() {
-
   if (rect && color) {
-
     // convert hsv to pc
     var pc = spectrum.hsv2pc(color.hsv);
 
@@ -287,35 +287,32 @@ function setCircle() {
       y: rect.height * (pc.y / 100)
     };
 
-    $.circle.applyProperties({
+    $.circle[OS_IOS ? "animate" : "applyProperties"]({
       center: px,
       borderColor: color.bw
     });
 
     $.circle.show();
-
   } else {
     $.circle.hide();
   }
 }
 
 function getDefaultUnit() {
-
   if (!unit) {
-
-    var defaultUnit = Ti.App.Properties.getString('ti.ui.defaultunit');
+    var defaultUnit = Ti.App.Properties.getString("ti.ui.defaultunit");
 
     var units = {
-      'dp': Ti.UI.UNIT_DIP,
-      'dip': Ti.UI.UNIT_DIP,
-      'in': Ti.UI.UNIT_IN,
-      'cm': Ti.UI.UNIT_CM,
-      'mm': Ti.UI.UNIT_MM,
-      'px': Ti.UI.UNIT_PX
+      dp: Ti.UI.UNIT_DIP,
+      dip: Ti.UI.UNIT_DIP,
+      in: Ti.UI.UNIT_IN,
+      cm: Ti.UI.UNIT_CM,
+      mm: Ti.UI.UNIT_MM,
+      px: Ti.UI.UNIT_PX
     };
 
     if (!units[defaultUnit]) {
-      throw 'Unknown ti.ui.defaultunit: ' + defaultUnit;
+      throw "Unknown ti.ui.defaultunit: " + defaultUnit;
     }
 
     unit = units[defaultUnit];
